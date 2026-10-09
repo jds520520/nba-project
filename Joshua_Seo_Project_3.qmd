@@ -1,0 +1,287 @@
+---
+articletitle: |
+  Project 3: How International Talent Shaped the Modern NBA Archetype
+# shorttitle: "Seo et al. (2026)"
+format: sportrxiv-pdf
+bibliography: bibliography.bib
+author:
+  - name: Joshua Seo
+    affiliations:
+      - ref: 1
+    corresponding: true
+    email: jds520@ucla.edu
+affiliations:
+      - id: 1
+        name: UCLA Department of Statistics and Data Science
+abstract: |
+  The NBA has changed dramatically over the last two decades, moving away from bruising, low-post play toward a fast-paced, space-oriented style. At the same time, the league has witnessed a massive influx of international talent. This paper bridges these two trends by analyzing more than 20 years of player data from the NBA Stats API. Our analysis indicates that international talent did not merely adapt; rather, they fundamentally redefined the traditional big-man archetype by merging elite perimeter skills with traditional interior size.
+license-type: ccby
+keywords: [NBA Analytics, Sports Science, Player Archetypes, International Basketball]
+reference-section-title: References
+printnote: "PROJECT SUBMISSION"
+pdf-engine: xelatex
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+# Loading required libraries
+library(tidyverse)
+library(kableExtra)
+library(knitr)
+# Loading the data
+nba_data <- read.csv("all_seasons.csv")
+```
+
+## Introduction
+
+For the majority of basketball history, the path to an NBA championship was anchored in the paint, through low-post physical play and traditional centers who rely solely on size to score close to the rim. However, Thinking Basketball [@Thi25] claims that over the past two decades, the league has undergone a massive structural evolution. Today’s centers (sometimes referred to as “stretch-fives”) are often expected to be more versatile, capable of stepping outside the paint to shoot three-pointers and pass the ball to open teammates. This trend where teams have moved past rigid, position-based roles was driven by analytical insights regarding the mathematical efficiency of the three-point shot, along with key rule changes like the legalization of zone defense. This modern era of “positionless basketball” is characterized by offenses run through geometric floor spacing, rapid ball movement, and universal perimeter skill sets.
+
+Parallel to this “modernization” of the NBA was a massive demographic shift: the globalization of the NBA talent pool. Previously, the league was a predominantly domestic enterprise with the vast majority of players being American. Howard Bartee [@Bar24] explains, however, following the international exposure of the 1992 Olympic “Dream Team” and the subsequent scouting boom of the 2000s, it became more globalized to the point where international players frequently claim the league’s highest individual honors.
+
+::::: {layout="[40, -5, 55]"}
+<div>
+
+![*The three finalists for the 2026 MVP award were international players from Serbia, Canada, and France (left to right)*](images/nbamvp.jpg)
+
+![The last domestic player to win the award was James Harden in 2018.](images/567630476_750x422.png)
+
+</div>
+
+<div>
+
+\begin{spacing}{1.2}
+While sports analytics literature has extensively documented the NBA’s three-point revolution, and sports sociologists have tracked the globalization of the game, few studies have empirically analyzed the intersection of these two simultaneous trends. Consequently, the evolving data profiles of domestic and international players are rarely evaluated side by side. This leaves open a critical question: Did the influx of skilled international talent actively catalyze the shift toward positionless basketball, or did these global athletes merely adapt to an analytical trend already established by domestic teams?
+
+\vspace{1em}
+
+To answer this question, this study analyzes over two decades of historical NBA data, comparing the physical and production metrics of domestic players against international players. By discerning trends in $height$, $weight$, $points$, $rebounds$, and $assists$ across different eras, we directly contrast the developmental paths of both player pools as an effort to determine whether international players adapted to or led the modernization of the NBA. Our findings suggest that international players did not simply adapt to the transition to fast-paced, high-spacing basketball. Instead, they actively contributed to it by introducing the notion that perimeter skill sets can be compatible with raw physical size. These athletes fundamentally redefined the traditional big-man archetype, serving as a crucial structural cornerstone for the modern era of positionless basketball.
+\end{spacing}
+
+</div>
+:::::
+
+## The Data
+
+The dataset analyzed is a comprehensive collection of over two decades of NBA player metrics obtained from the NBA Stats API [@Nat26]. It includes demographic traits (such as height, weight, and place of birth), biographical details (such as team played for, draft year and round), and basic box score statistics (such as games played, points, rebounds, and assists) for each player who has been part of an NBA team’s active roster during the time span.
+
+The data set is from Kaggle [@Cir23]. Below is a table that provides us with information about the variables in the data set.
+
+```{r}
+# 1. Extract the variable names and data types. The sample included is my favorite player who I actually wrote about in my UCLA college essay.
+schema_data <- data.frame(
+  Variable = c("player_name", "team_abbreviation", "age", "player_height", 
+               "player_weight", "college", "country", "draft_year", "draft_round", "draft_number", "gp", "pts", "reb", "ast", "net_rating", "oreb_pct", "dreb_pct", "usg_pct", "ts_pct", "ast_pct", "season"),
+  Type = c("character", "character", "numeric", "numeric (cm)", 
+           "numeric (kg)", "character", "character", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "numeric", "character"),
+`Sample` = c("Zach LaVine", "CHI", "26", "195.58", 
+                             "90.7184", "UCLA", "USA", "2014", 
+                             "1", "13", "58", "27.4", 
+                             "5.0", "4.9", "-1.6", "0.021", 
+                             "0.132", "0.302", "0.634", "0.237", "2020-21"),
+  check.names = FALSE
+)
+
+# 2. Render the table
+knitr::kable(schema_data, format = "latex", booktabs = TRUE, caption = "Dataset Variables and Attribute Descriptions") %>% kable_styling(latex_options = "scale_down", position = "center")
+```
+
+Note on Variables: Standard statistics are reported as per-game averages, including games played (gp), points (pts), rebounds (reb), and assists (ast). Advanced metrics are expressed as percentages or ratings to reflect a player's efficiency and impact while on the court. These include True Shooting Percentage (ts_pct), which measures overall scoring efficiency across all shot types; Usage Percentage (usg_pct), which estimates the percentage of team plays a player concludes; and Net Rating (net_rating), which tracks the team's point differential per 100 possessions while the player is on the floor. Additionally, Offensive Rebound (oreb_pct), Defensive Rebound (dreb_pct), and Assist (ast_pct) percentages estimate the specific share of available plays or rebounds a player secures while actively in the game.
+
+## Analysis
+
+To trace the structural transformations of the NBA over the last three decades, the dataset was divided into three distinct chronological eras. This captures the transition from the post-up heavy playstyle of the late 1990s to the mathematically optimized "Space and Pace" era defining contemporary basketball. By aggregating individual seasonal records across these eras, we can observe shifts in player composition, physical standards, and scoring efficiency.
+
+Table 2 provides a comprehensive overview of how average baseline biometrics, offensive volume, and scoring efficiency metrics have fluctuated across these three periods of league history.
+
+```{r}
+# Group data into chronological eras to view transformations
+era_summary <- nba_data %>%
+  mutate(Year = as.numeric(substr(season, 1, 4))) %>%
+  mutate(Era = case_when(
+    Year < 2005 ~ "Traditional Era (1996-2004)",
+    Year >= 2005 & Year < 2015 ~ "Transition Era (2005-2014)",
+    Year >= 2015 ~ "Modern Era (2015-Present)"
+  )) %>%
+  group_by(Era) %>%
+  summarise(
+    `Total Players` = n(),
+    `Avg Height (cm)` = round(mean(player_height, na.rm = TRUE), 1),
+    `Avg Weight (kg)` = round(mean(player_weight, na.rm = TRUE), 1),
+    `Avg Usage %` = round(mean(usg_pct, na.rm = TRUE) * 100, 1),
+    `Avg TS %` = round(mean(ts_pct, na.rm = TRUE) * 100, 1)
+  )
+
+# Render the table
+knitr::kable(era_summary, format = "latex", booktabs = TRUE, caption = "NBA Anthropometric and Efficiency Trends Across Eras") %>% kable_styling(latex_options = "scale_down", position = "center")
+```
+
+#### Visualizing the Volume-Efficiency Dynamic
+
+To evaluate how offensive workloads alter player production across different periods, Figure 3 maps individual season usage percentages against scoring efficiency.
+
+```{r efficiency-plot, fig.cap="The Correlation Between Offensive Usage and True Shooting Percentage by Era", fig.height=4, fig.width=6, fig.pos="H"}
+# 1. Filter out low-minute outliers for a clean plot
+plot_data <- nba_data %>%
+  filter(gp > 10 & usg_pct > 0) %>%
+  mutate(Year = as.numeric(substr(season, 1, 4))) %>%
+  mutate(Era = case_when(
+    Year < 2005 ~ "1996-2004",
+    Year >= 2005 & Year < 2015 ~ "2005-2014",
+    Year >= 2015 ~ "2015-Present"
+  ))
+
+# 2. Generate the trend scatter plot
+ggplot(plot_data, aes(x = usg_pct * 100, y = ts_pct * 100, color = Era)) +
+  geom_point(alpha = 0.2, size = 1) +
+  geom_smooth(method = "lm", se = FALSE, size = 1.2) +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal() +
+  labs(
+    x = "Usage Percentage (USG%)",
+    y = "True Shooting Percentage (TS%)",
+    color = "League Era"
+  ) +
+  theme(legend.position = "bottom")
+```
+
+Our exploratory data analysis reveals a profound structural shift in how offensive value is generated in the professional basketball landscape. Looking closely at Table 2, physical metrics have shifted remarkably little; the average height of an NBA player has remained stable around 200 cm, while average weights have gently declined from 101.1 kg to 98.6kg as teams trade brute strength for lateral speed. 
+
+::: {.callout-note appearance="simple" icon="true"}
+### What is True Shooting Percentage (TS%)?
+
+Standard **Field Goal Percentage (FG%)** treats all shots the same—an open layup and a 30-foot three-pointer both count as exactly one "shot attempt." This is disadvantageous to perimeter players who take high volumes of three-pointers, while boosting center profiles who only shoot close to the rim.
+
+\vspace{1em}
+
+NBAStuffer.com [@NBA26] explains how **True Shooting Percentage (TS%)** addresses this issue by measuring overall scoring efficiency while taking into account the "value" of different shot attempts. For example, a made three-pointer is worth 50% more points than a standard two-point basket. Additionally, it accounts for the physical possessions consumed by drawing fouls and shooting free throws.
+
+\vspace{1em}
+
+The standard calculation uses a scaling factor ($\approx 0.44$) to account for traditional and-one sequences, technical free throws, and three-shot fouls:
+
+$$TS\% = \frac{\text{Total Points}}{2 \times (\text{Field Goal Attempts} + 0.44 \times \text{Free Throw Attempts})} \times 100$$
+:::
+
+The real evolution is found in efficiency tracking. In the Traditional Era (1996-2004), high usage rates were heavily penalized by defensive schemes that packed the paint, forcing isolated stars into highly contested mid-range looks. In contrast, the modern era shows a dramatic upward shift in baseline True Shooting Percentage. Thanks to advanced shot selection tracking, floor spacing, and the heavy prioritization of three-point field goals, modern primary options are capable of carrying immense usage loads without suffering traditional drop-offs in efficiency.
+
+In summary, this analysis demonstrates that physical size constraints are increasingly secondary to skill-based, perimeter-oriented performance baselines. True shooting efficiency continues to rise globally across the league profile, validating that strategic spacing optimizations over the last 30 years have fundamentally rewritten the scoring ceiling of the sport.
+
+#### The Rise of International Production
+
+As Bartee [@Bar24] explains, the modernization of the NBA is also linked to the rapid globalization of its talent pool. Over the past three decades, the league transitioned from consisting of mainly domestic players into a global marketplace, drawing elite foreign talents who completely altered the expectations of the game. European and international development systems historically value fluid passing, spatial awareness, and perimeter shooting across all positions. As these players integrated into the NBA, their versatile skill sets challenged traditional, physical post-up oriented play styles and catalyzed the shift toward open-floor optimization.
+
+To track the growth of global influence, Table 3 measures the percentage of international players in the league across our three defined eras, alongside their average True Shooting Percentage ($TS\%$).
+
+```{r}
+# Group and calculate international player shares
+international_summary <- nba_data %>%
+  mutate(Year = as.numeric(substr(season, 1, 4))) %>%
+  mutate(Era = case_when(
+    Year < 2005 ~ "Traditional Era (1996-2004)",
+    Year >= 2005 & Year < 2015 ~ "Transition Era (2005-2014)",
+    Year >= 2015 ~ "Modern Space & Pace (2015-Present)"
+  )) %>%
+  mutate(Is_International = if_else(country == "USA", "Domestic", "International")) %>%
+  group_by(Era, Is_International) %>%
+  summarise(
+    Player_Count = n(),
+    Avg_TS = round(mean(ts_pct, na.rm = TRUE) * 100, 1),
+    Avg_Usage = round(mean(usg_pct, na.rm = TRUE) * 100, 1),
+    .groups = "drop_last"
+  ) %>%
+  mutate(Share_Pct = round(Player_Count / sum(Player_Count) * 100, 1)) %>%
+  filter(Is_International == "International") %>%
+  select(Era, `Int'l Player Count` = Player_Count, `League Share %` = Share_Pct, `Avg TS %` = Avg_TS, `Avg Usage %` = Avg_Usage)
+
+# Render the dynamic global talent table
+knitr::kable(international_summary, format = "latex", booktabs = TRUE, caption = "International Player Growth and Performance Impact") %>% kable_styling(latex_options = "scale_down", position = "center")
+```
+
+To better illustrate the velocity of this transition, Figure 4 tracks the year-over-year increase in the total number of international athletes playing in the NBA alongside their collective scoring efficiency baseline.
+
+```{r intl-plot, fig.cap="Year-over-Year Growth and True Shooting Percentage of International NBA Players", fig.height=4, fig.width=6, fig.pos="H"}
+# 1. Prepare year-by-year international data
+intl_trend <- nba_data %>%
+  mutate(Year = as.numeric(substr(season, 1, 4))) %>%
+  filter(country != "USA") %>%
+  group_by(Year) %>%
+  summarise(
+    Player_Count = n(),
+    Avg_TS = mean(ts_pct, na.rm = TRUE) * 100
+  )
+
+# 2. Plot the dual-trend using ggplot2
+ggplot(intl_trend, aes(x = Year)) +
+  geom_col(aes(y = Player_Count), fill = "#3182bd", alpha = 0.7) +
+  geom_line(aes(y = (Avg_TS - 45) * 4), color = "#e34a33", size = 1.2) + # Scaled to fit chart space
+  scale_x_continuous(
+    limits = c(1996, 2022), 
+    breaks = seq(1996, 2022, by = 4)
+  ) +
+  scale_y_continuous(
+    name = "Number of International Players (Bars)",
+    sec.axis = sec_axis(~ . / 4 + 45, name = "Average True Shooting % (Line)")
+  ) +
+  theme_minimal() +
+  labs(
+    x = "Season (Starting Year)",
+    title = "The Globalization of NBA Talent"
+  ) +
+  theme(
+    axis.title.y.left = element_text(color = "#3182bd", fontface = "bold"),
+    axis.title.y.right = element_text(color = "#e34a33", fontface = "bold"),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+```
+
+Figure 4 illustrates the dual progression of the NBA's growing global demographic and the rising efficiency baseline of its international players. The blue clustered columns indicate a steady, multi-decade increase in the number of international athletes active within the league, demonstrating a clear globalization trend.
+
+On the other hand, the intersecting red trajectory line reveals a corresponding long-term increase in average True Shooting Percentage ($TS\%$) (the high values for early years is likely a byproduct of a small sample size). As Table 3 also shows, the average TS% has increased from around 50% to 55% throughout the three decades, telling us that this demographic expansion of the league did not deteriorate its talent pool. In fact, this concurrent growth demonstrates that international prospects were not merely roster-fillers providing depth. Rather, their refined perimeter skill sets and playmaking efficiency served as a structural catalyst that helped drive the league's overarching mathematical optimization.
+
+#### The Global Impact on Offensive Efficiency
+
+To evaluate how the globalization of talent intersected with the league's modernization, Figure 5 maps individual season usage percentages ($usg\_pct$) against overall scoring efficiency ($ts\_pct$) across eras, comparing domestic and international athletes directly.
+
+```{r efficiency-comparison-plot, fig.cap="Offensive Volume vs. Scoring Efficiency for Domestic and International Players Across Eras", fig.height=4, fig.width=6, fig.pos="H"}
+# 1. Clean data and define player origin groups
+comparison_data <- nba_data %>%
+  filter(gp > 10 & usg_pct > 0) %>%
+  mutate(Year = as.numeric(substr(season, 1, 4))) %>%
+  mutate(Era = case_when(
+    Year < 2005 ~ "Traditional Era (1996-2004)",
+    Year >= 2005 & Year < 2015 ~ "Transition Era (2005-2014)",
+    Year >= 2015 ~ "Modern Era (2015-Present)"
+  )) %>%
+  mutate(Origin = if_else(country == "USA", "Domestic", "International"))
+
+# 2. Plot the volume-efficiency interaction faceted by Era
+ggplot(comparison_data, aes(x = usg_pct * 100, y = ts_pct * 100, color = Origin)) +
+  geom_point(alpha = 0.15, size = 1) +
+  geom_smooth(method = "lm", se = FALSE, size = 1.2) +
+  facet_wrap(~Era) +
+  scale_color_manual(values = c("#3182bd", "#e34a33")) +
+  theme_minimal() +
+  labs(
+    x = "Usage Percentage (USG%)",
+    y = "True Shooting Percentage (TS%)",
+    color = "Player Origin"
+  ) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(face = "bold", size = 10)
+  )
+```
+
+Figure 5 offers an empirical analysis regarding the intersection of modernization and the influx of global talent. We analyze the volume-efficiency distribution chronologically across the three eras, while also directly comparing the domestic and international player pools. Across all three periods, it is noticeable that the international trendline (in red) consistently maintains a higher trajectory than the domestic trendline (in blue). Even during the Traditional Era (1996–2004), when both groups operated within highly physical and restrictive defensive environments, international athletes maximized their possessions more efficiently. As the league transitioned toward a modern style of play, this gap persisted.
+
+These findings prove that international players did not simply conform to an existing domestic trend toward space-and-pace basketball. Instead, they entered the league with a baseline skill set already optimized for scoring efficiency ($ts\_pct$), enabling them to manage high usage rates and push the strategic boundaries of the modern, positionless game.
+
+## Conclusion
+
+This study evaluated the simultaneous structural and demographic evolutions of the National Basketball Association over the past three decades, specifically contrasting the performance outcomes of domestic and international athlete pools. While some may believe that international athletes were secondary participants who adjusted to a domestic trend, our analysis of offensive volume and scoring efficiency across three distinct eras reveals that international players consistently maintained a superior efficiency trajectory relative to their usage rates.
+
+From the empirical evidence, we can conclude that international players actually introduced pre-optimized skill sets that fundamentally catalyzed the NBA's offensive evolution. In other words, the globalization of the talent pool was essentially the structural engine driving the modern efficiency revolution.
+
+To expand on this study, further research can be conducted by tracking the developmental backgrounds of domestic versus international prospects. This could provide deeper insights into why these distinct play styles and efficiency gaps exist in the first place, possibly giving us a predictive model for future globalization and play style evolution trends.
