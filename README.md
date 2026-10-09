@@ -3,6 +3,9 @@
 A research-style paper, written in R and Quarto, comparing
 international and domestic NBA players across three eras.
 
+Formatted with the open-source SportRxiv Quarto template. This is a
+class project and has not been submitted to or published by SportRxiv.
+
 ## Question
 As the NBA moved toward floor spacing and three-point shooting, did
 international players adapt to that shift or help lead it?
