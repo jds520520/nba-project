@@ -12,7 +12,7 @@ international players adapt to that shift or help lead it?
 
 ## Data
 Player-season records from 1996 to 2022, originally from the NBA
-Stats API and downloaded from Kaggle: [paste the dataset link]
+Stats API and downloaded from Kaggle
 
 ## Methods
 - R with tidyverse, ggplot2, knitr and kableExtra, written in Quarto
