@@ -1,6 +1,6 @@
 ---
 articletitle: |
-  Project 3: How International Talent Shaped the Modern NBA Archetype
+  How International Talent Shaped the Modern NBA Archetype
 # shorttitle: "Seo et al. (2026)"
 format: sportrxiv-pdf
 bibliography: bibliography.bib
@@ -18,7 +18,7 @@ abstract: |
 license-type: ccby
 keywords: [NBA Analytics, Sports Science, Player Archetypes, International Basketball]
 reference-section-title: References
-printnote: "PROJECT SUBMISSION"
+printnote: "UCLA"
 pdf-engine: xelatex
 ---
 
